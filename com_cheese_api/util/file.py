@@ -12,6 +12,7 @@ class FileReader:
     fname: str = ''
     user: object = None
     cheese: object = None
+    review: object = None
     train: object = None
     test: object = None
     id: str = ''
