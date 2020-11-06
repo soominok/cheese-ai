@@ -201,13 +201,13 @@ class UserDf:
     def change_to_cheese(data, item_count):
         cheese_df = data.rename(columns={'ranking': 'sub2_rank'})
         user_cheese_merge = pd.merge(item_count, cheese_df, on = 'sub2_rank', how = 'left')
-        user_data1 = user_cheese_merge.drop(['Unnamed: 0_x', 'item_code', 'item_name', 'item_add_name', 'category_x', 'sub1_category', 'sub2_category', 'item_brand', 'sub1_counts', 'sub1_rank', 'sub2_counts', 'buy_price'], axis=1)
-        user_data2 = user_data1.drop(['country', 'matching', 'matching.1', 'content', 'img'], axis=1)
-        user_data_fin = user_data2.rename(columns={'Unnamed: 0_y': 'cheese_code', 'brand': 'cheese_brand', 'name': 'cheese_name', 'price' : 'cheese_one_price', 'sub2_rank': 'cheese_rank', \
+        user_data1 = user_cheese_merge.drop(['item_code', 'item_name', 'item_add_name', 'category_x', 'sub1_category', 'sub2_category', 'item_brand', 'sub1_counts', 'sub1_rank', 'sub2_counts', 'buy_price'], axis=1)
+        user_data2 = user_data1.drop(['country', 'matching', 'content', 'img'], axis=1)
+        user_data_fin = user_data2.rename(columns={'Unnamed: 0_x': 'user_index', 'Unnamed: 0_y': 'cheese_code', 'brand': 'cheese_brand', 'name': 'cheese_name', 'price' : 'cheese_one_price', 'sub2_rank': 'cheese_rank', \
                                                         'category_y': 'cheese_category', 'texture': 'cheese_texture', 'types': 'cheese_types'})
         # print(list(users_cheese_merge))
         # print(user_data_fin)
-        # user_data_fin.to_csv(os.path.join('com_cheese_api/resources/data', 'user_df.csv'), index=True, encoding='utf-8-sig')
+        user_data_fin.to_csv(os.path.join('com_cheese_api/resources/data', 'user_df.csv'), index=False, encoding='utf-8-sig')
         return user_data_fin
     # item_Change()
 

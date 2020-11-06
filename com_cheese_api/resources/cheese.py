@@ -158,6 +158,7 @@ class CheeseDf:
 
         print(this.cheese.isnull().sum())
 
+        this = CheeseDf.brand_merge_code(this)
         this = CheeseDf.ranking_ordinal(this)
         this = CheeseDf.cheese_texture_norminal(this)
         this = CheeseDf.types_norminal(this)
@@ -178,9 +179,10 @@ class CheeseDf:
         self.odf = pd.DataFrame(
             {
                 'ranking' : this.train.ranking,
-                'brand' : this.train.brand,
+                'brand' : this.train.brand_code,
                 'category' : this.train.category,
-                'types': this.train.types
+                'types': this.train.types,
+                'matching': this.train.matching
             }
         )
 
@@ -216,8 +218,8 @@ class CheeseDf:
 
             {
                 'texture': this.train.texture,
-                # 'matching' : this.train.matching,
-                'img' : this.train.img            
+                'img' : this.train.img
+                
             }
 
         )
@@ -228,7 +230,7 @@ class CheeseDf:
         print(sumdf)
         print(sumdf.isnull().sum())
         print(list(sumdf))
-        sumdf.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
+        sumdf.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
         return sumdf
 
 
@@ -254,6 +256,12 @@ class CheeseDf:
     def drop_feature(this, feature) -> object:
         this.train = this.train.drop([feature], axis = 1)
         this.test = this.test.drop([feature], axis = 1)
+        return this
+
+    @staticmethod
+    def brand_merge_code(this) -> object:
+        brand_code = pd.read_csv("com_cheese_api/resources/data/cheese_brand_code.csv")
+        this.cheese = pd.merge(this.cheese, brand_code, left_on = 'brand', right_on='brand', how = 'left')
         return this
 
     @staticmethod
@@ -298,12 +306,11 @@ class CheeseDf:
         this.cheese['category'] = this.cheese['category'].map(category_map)
         return this
 
-
     @staticmethod
     def df_split(data):
         cheese_train, cheese_test = train_test_split(data, test_size = 0.3, random_state = 32)
-        cheese_train.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_train.csv'), index=False)
-        cheese_test.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_test.csv'), index=False)       
+        cheese_train.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_train.csv'), index=False)
+        cheese_test.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_test.csv'), index=False)       
         return cheese_train, cheese_test
 
 # if __name__ == '__main__' :
@@ -343,9 +350,9 @@ class CheeseDto(db.Model):
     __table_args__={'mysql_collate':'utf8_general_ci'}
 
     ranking : int = db.Column(db.Integer, primary_key=True, index=True)
+    brand : int = db.Column(db.Integer)
     category: int = db.Column(db.Integer)
     types : int = db.Column(db.Integer)
-    brand : str = db.Column(db.String(30))
     texture : str = db.Column(db.String(30))
     img : str = db.Column(db.String(255))
 
@@ -354,34 +361,33 @@ class CheeseDto(db.Model):
     # orders = db.relationship('OrderDto', back_populates='cheese', lazy='dynamic')
     # prices = db.relationship('PriceDto', back_populates='cheese', lazy='dynamic')
 
-    def __init__(self, ranking, category, types, brand, texture, img) : 
+    def __init__(self, ranking, brand, category, types, texture, img) : 
         self.ranking = ranking
+        self.brand = brand
         self.category = category
         self.types = types
-        self.brand = brand
         self.texture = texture
         self.img = img
 
     def __repr__(self):
-        return f'Cheese(ranking={self.ranking}, category={self.category}, \
-                    types={self.types}, texture={self.texture}, brand={self.brand}, img={self.img})'
+        return f'Cheese(ranking={self.ranking}, brand={self.brand}, category={self.category}, \
+                    types={self.types}, texture={self.texture}, img={self.img})'
 
     def __str__(self):
-        return f'Cheese(ranking={self.ranking}, category={self.category}, \
-                    types={self.types}, texture={self.texture}, brand={self.brand}, img={self.img})'
+        return f'Cheese(ranking={self.ranking}, brand={self.brand}, category={self.category}, \
+                    types={self.types}, texture={self.texture}, img={self.img})'
 
 
     @property
     def json(self):
-        return {'ranking':self.ranking, 'category':self.category, 'types':self.types, 'texture':self.types, \
-                    'brand':self.brand, 'img':self.img}
+        return {'ranking':self.ranking, 'brand':self.brand, 'category':self.category, \
+                    'types':self.types, 'texture':self.types, 'img':self.img}
 
 class CheeseVo():
-    cheese_id : ''
     ranking : 0
+    brand : ''
     category: 0
     types : 0
-    brand : ''
     texture : ''
     img : ''
 
