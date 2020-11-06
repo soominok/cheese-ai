@@ -258,7 +258,6 @@ class UserDf:
     def cheese_code_ordinal(this) -> object:
         return this
 
-#######################더미변수로?! 여쭤보기~~###############################
     # @staticmethod
     # def cheese_brand_nominal(this) -> object:
     #     train = this.train
