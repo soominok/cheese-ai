@@ -31,12 +31,15 @@ def matching_kind():
 
 # matching_kind()
 
-# def dummy_matching():
-#     cheese_matching = cheese.matching.str.split('\s*,\s*', expand = True).stack().str.get_dummies().sum(level=0)
-#     print(cheese_matching)
-#     cheese_matching.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_matching.csv'), index=True, encoding='utf-8-sig')
+def dummy_matching():
+    cheese = cheeseData()
+    cheese_matching = cheese.matching.str.split('\s*,\s*', expand = True).stack().str.get_dummies().sum(level=0)
+    print(cheese_matching)
+    # cheese_code_df = cheese['cheese_id']
+    # dummy_match = pd.concat(cheese_code_df, cheese_matching) 
+    cheese_matching.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_matching.csv'), index=True, encoding='utf-8-sig')
 
-# dummy_matching()
+dummy_matching()
 
 
 

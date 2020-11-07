@@ -18,6 +18,34 @@ from sklearn.model_selection import train_test_split
 import os
 from pathlib import Path
 
+from datetime import datetime
+from flask import Flask, render_template, url_for, flash, redirect
+from flask_sqlalchemy import SQLAlchemy
+
+Session = openSession()
+session = Session()
+
+app = Flask(__name__)
+
+config = {
+    'user': 'bitai',
+    'password': '456123',
+    'host': '127.0.0.1',
+    'port': '3306',
+    'database': 'com_cheese_api'
+}
+
+charset = {'utf8':'utf8'}
+
+url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
+
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
 
 # DB로 데이터 전송하는 부분
 class ReviewDto(db.Model):

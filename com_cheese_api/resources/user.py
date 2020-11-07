@@ -119,6 +119,7 @@ class UserDf:
         print(f'######## data type 체크 ##########')
         print(this.user.dtypes)        
 
+        this.user.to_csv(os.path.join('com_cheese_api/resources/data', 'user_dataset.csv'), index=False, encoding='utf-8-sig')
 
         user_split = UserDf.user_data_split(this.user)
 
@@ -177,7 +178,7 @@ class UserDf:
         sumdf = pd.concat([self.odf, df], axis = 1)
         print('######## train 데이터 전처리 완료 체크 ##########')
         print(sumdf) # train 데이터만 추출했기 때문에 25811개
-        sumdf.to_csv(os.path.join('com_cheese_api/study/data', 'users_data.csv'), index=False, encoding='utf-8-sig')
+        sumdf.to_csv(os.path.join('com_cheese_api/resources/data', 'users_data.csv'), index=False, encoding='utf-8-sig')
         
         return sumdf
 

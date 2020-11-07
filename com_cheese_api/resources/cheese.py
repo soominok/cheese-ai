@@ -1,9 +1,3 @@
-# service는 전처리하는 곳
-# hook = 아래의 순서대로 하겠다.
-# 'userid' : this.train.PassengerId = train에 있는 Pclass를 가져와서 userid로 바꾼다
-# odf 랑 df 를 따로 만들어서 axis =1 로 양옆으로 둘을 붙일 수 있게(concat) 함
-# staticmethod는  self가 없음 create_train같은 함수를 가져다 쓸 수 있게함
-
 from typing import List
 from flask import request
 from sqlalchemy import func
@@ -190,7 +184,12 @@ class CheeseDf:
         this = CheeseDf.cheese_texture_norminal(this)
         this = CheeseDf.types_norminal(this)
         this = CheeseDf.cheese_category_norminal(this)
+        this = CheeseDf.country_norminal(this)
         this.cheese['cheese_id'] = this.cheese['cheese_id'].str.replace('p','')
+
+
+        this.cheese.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_dataset.csv'), index=True, encoding='utf-8-sig')
+
 
         cheese_split = CheeseDf.df_split(this.cheese)
 
@@ -214,6 +213,7 @@ class CheeseDf:
         )
 
         this.id = this.test['name']
+        this = CheeseDf.drop_feature(this, 'Unnamed: 0')
         # print(f'Preprocessing Train Variable : {this.train.columns}')
         # print(f'Preprocessing Test Variable : {this.test.columns}')    
         this = CheeseDf.drop_feature(this, 'country')
@@ -256,7 +256,7 @@ class CheeseDf:
         print(sumdf)
         print(sumdf.isnull().sum())
         print(list(sumdf))
-        sumdf.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
+        sumdf.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
         return sumdf
 
 
@@ -292,6 +292,22 @@ class CheeseDf:
 
     @staticmethod
     def ranking_ordinal(this) -> object:
+        return this
+
+    @staticmethod
+    def country_norminal(this) -> object:
+        this.cheese['country_code'] = this.cheese['country'].map({
+            '이탈리아': 1,
+            '이탈리안': 1,
+            '프랑스': 2,
+            '미국': 2,
+            '네덜란드': 3,
+            '스페인': 4,
+            '독일': 5,
+            '영국': 6,
+            '덴마크': 7,
+            '뉴질랜드': 8,
+        })
         return this
 
     @staticmethod
