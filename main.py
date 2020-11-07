@@ -12,7 +12,7 @@ CORS(app, resources={r'/api/*': {"origins": "*"}})
 
 app.config['SQLALCHEMY_DATABASE_URI'] = url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# db = SQLAlchemy(app)
 
 db.init_app(app)
 api = Api(app)

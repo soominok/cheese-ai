@@ -1,4 +1,4 @@
-﻿user_index,user_id,password,gender,age_group,cheese_texture,buy_count
+﻿user_no,user_id,password,gender,age_group,cheese_texture,buy_count
 3312,1751881,1,1,2,1,2
 21971,1835210,1,1,2,1,2
 2347,5824726,1,1,4,1,1

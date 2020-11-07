@@ -47,6 +47,33 @@ from sklearn.model_selection import train_test_split
  *  2020.10.20    김유정          최초 생성
 ''' 
 
+from datetime import datetime
+from flask import Flask, render_template, url_for, flash, redirect
+from flask_sqlalchemy import SQLAlchemy
+
+
+app = Flask(__name__)
+
+config = {
+    'user': 'bitai',
+    'password': '456123',
+    'host': '127.0.0.1',
+    'port': '3306',
+    'database': 'com_cheese_api'
+}
+
+charset = {'utf8':'utf8'}
+
+url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
+
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+
 # 1. 데이터 추출 KDD의 목표는 csv로 만드는 것
 # ==============================================================
 # ====================                     =====================
@@ -163,6 +190,7 @@ class CheeseDf:
         this = CheeseDf.cheese_texture_norminal(this)
         this = CheeseDf.types_norminal(this)
         this = CheeseDf.cheese_category_norminal(this)
+        this.cheese['cheese_id'] = this.cheese['cheese_id'].str.replace('p','')
 
         cheese_split = CheeseDf.df_split(this.cheese)
 
@@ -175,7 +203,6 @@ class CheeseDf:
 
         print(this)
 
-
         self.odf = pd.DataFrame(
             {
                 'ranking' : this.train.ranking,
@@ -185,7 +212,6 @@ class CheeseDf:
                 'matching': this.train.matching
             }
         )
-
 
         this.id = this.test['name']
         # print(f'Preprocessing Train Variable : {this.train.columns}')
@@ -230,7 +256,7 @@ class CheeseDf:
         print(sumdf)
         print(sumdf.isnull().sum())
         print(list(sumdf))
-        sumdf.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
+        sumdf.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
         return sumdf
 
 
@@ -309,8 +335,8 @@ class CheeseDf:
     @staticmethod
     def df_split(data):
         cheese_train, cheese_test = train_test_split(data, test_size = 0.3, random_state = 32)
-        cheese_train.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_train.csv'), index=False)
-        cheese_test.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_test.csv'), index=False)       
+        cheese_train.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_train.csv'), index=False)
+        cheese_test.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_test.csv'), index=False)       
         return cheese_train, cheese_test
 
 # if __name__ == '__main__' :
@@ -395,9 +421,13 @@ class CheeseVo():
 db.init_app(app)
 with app.app_context():
     db.create_all()
+
+
+
+Session = openSession()
+session = Session()
     
 
-<<<<<<< HEAD:com_cheese_api/resources/cheese.py
 class CheeseDao(CheeseDto):
     # @classmethod
     # def bulk(cls, CheeseDf):
@@ -417,17 +447,3 @@ class CheeseDao(CheeseDto):
 
 if __name__ == '__main__':
     CheeseDao.bulk()
-=======
-# class CheeseDao(CheeseDto):
-#     @classmethod
-#     def bulk(cls, CheeseDf):
-#         cheeseDf = CheeseDf()
-#         df = CheeseDf.new()
-#         print(df.head())
-#         session.bulk_insert_mappings(CheeseDto, df.to_dict(orient="records"))
-#         session.commit()
-#         session.close()
-
-# if __name__ == '__main__':
-#     CheeseDao.bulk()
->>>>>>> e5ecb07c72009b47098be381c9de75245da7f747:com_cheese_api/study/cheese.py

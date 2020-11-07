@@ -9,6 +9,7 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import seaborn as sns
+from sqlalchemy import func
 from sqlalchemy.ext.declarative import declarative_base
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold  # k value is understood as count
@@ -23,6 +24,49 @@ from sklearn.svm import SVC # svm
 
 import os
 import json
+
+from datetime import datetime
+from flask import Flask, render_template, url_for, flash, redirect
+from flask_sqlalchemy import SQLAlchemy
+
+Session = openSession()
+session = Session()
+
+app = Flask(__name__)
+
+config = {
+    'user': 'bitai',
+    'password': '456123',
+    'host': '127.0.0.1',
+    'port': '3306',
+    'database': 'com_cheese_api'
+}
+
+charset = {'utf8':'utf8'}
+
+url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
+
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+
+'''
+ * @ Module Name : user.py 
+ * @ Description : Recommendation for cheese product
+ * @ since 2020.10.20
+ * @ version 1.0
+ * @ label : 'category'
+ * @ 치즈 상품 추천 개발 옥수민
+ * @ special reference libraries
+ *     finance_datareader, konlpy
+ * @ 수정일         수정자                   수정내용
+ *  -------    --------    ---------------------------
+ *  2020.10.20    옥수민          최초 생성
+''' 
 
 
 class UserDf:
@@ -64,6 +108,7 @@ class UserDf:
         this = UserDf.buy_count_numeric(this)
         this = UserDf.cheese_category_nominal(this)
         this = UserDf.cheese_texture_nominal(this)
+        this = UserDf.brand_merge_code(this)
 
         print(f'Preprocessing User Dataset : {this.user}')
 
@@ -88,7 +133,7 @@ class UserDf:
         
         self.odf = pd.DataFrame(
             {
-                'user_index': this.train.user_index,
+                'user_no': this.train.user_no,
                 'user_id': this.train.user_id,
                 'password': '1'
             }
@@ -98,7 +143,7 @@ class UserDf:
 
         this.id = this.test['user_id'] # This becomes a question.
         
-        # show_age_plot = UserDf.find_requency(this.user, 'user_index', 'user_age') 
+        # show_age_plot = UserDf.find_requency(this.user, 'user_no', 'user_age') 
         # 30대(1만5천) > 40대(1만4천) > 20대(3천5백) > 50대(3천1백) > 60대(523) > 10대=70대(80) >80대
         
         # print(show_age_plot)
@@ -108,7 +153,7 @@ class UserDf:
 
         show_corr = UserDf.make_corr(this.train)
 
-        # this = UserDf.drop_feature(this, 'user_index')
+        # this = UserDf.drop_feature(this, 'user_no')
         this = UserDf.drop_feature(this, 'cheese_brand')
         this = UserDf.drop_feature(this, 'cheese_code')
         this = UserDf.drop_feature(this, 'cheese_name')
@@ -123,6 +168,7 @@ class UserDf:
             {
                 'gender': this.train.gender,
                 'age_group': this.train.age_group,
+                # 'cheese_brand': this.train.cheese_brand,
                 'cheese_texture': this.train.cheese_texture_code,
                 'buy_count': this.train.buy_count
             }
@@ -131,7 +177,7 @@ class UserDf:
         sumdf = pd.concat([self.odf, df], axis = 1)
         print('######## train 데이터 전처리 완료 체크 ##########')
         print(sumdf) # train 데이터만 추출했기 때문에 25811개
-        sumdf.to_csv(os.path.join('com_cheese_api/resources/data', 'users_data.csv'), index=False, encoding='utf-8-sig')
+        sumdf.to_csv(os.path.join('com_cheese_api/study/data', 'users_data.csv'), index=False, encoding='utf-8-sig')
         
         return sumdf
 
@@ -203,11 +249,12 @@ class UserDf:
         user_cheese_merge = pd.merge(item_count, cheese_df, on = 'sub2_rank', how = 'left')
         user_data1 = user_cheese_merge.drop(['item_code', 'item_name', 'item_add_name', 'category_x', 'sub1_category', 'sub2_category', 'item_brand', 'sub1_counts', 'sub1_rank', 'sub2_counts', 'buy_price'], axis=1)
         user_data2 = user_data1.drop(['country', 'matching', 'content', 'img'], axis=1)
-        user_data_fin = user_data2.rename(columns={'Unnamed: 0_x': 'user_index', 'Unnamed: 0_y': 'cheese_code', 'brand': 'cheese_brand', 'name': 'cheese_name', 'price' : 'cheese_one_price', 'sub2_rank': 'cheese_rank', \
+        user_data_fin = user_data2.rename(columns={'Unnamed: 0_x': 'user_no', 'Unnamed: 0_y': 'cheese_code', 'brand': 'cheese_brand', 'name': 'cheese_name', 'price' : 'cheese_one_price', 'sub2_rank': 'cheese_rank', \
                                                         'category_y': 'cheese_category', 'texture': 'cheese_texture', 'types': 'cheese_types'})
         # print(list(users_cheese_merge))
         # print(user_data_fin)
-        user_data_fin.to_csv(os.path.join('com_cheese_api/resources/data', 'user_df.csv'), index=False, encoding='utf-8-sig')
+        user_data_fin.to_csv(os.path.join('com_cheese_api/study/data', 'user_df.csv'), index=False, encoding='utf-8-sig')
+
         return user_data_fin
     # item_Change()
 
@@ -231,7 +278,7 @@ class UserDf:
         gender_mapping = {'M': 0, 'F': 1}
         this.user['gender'] = this.user['user_gender'].map(gender_mapping)
         this.user = this.user # overriding
-        # this.user.to_csv(os.path.join('com_cheese_api/resources/data', 'check11.csv'), index=False, encoding='utf-8-sig')
+        # this.user.to_csv(os.path.join('data', 'check11.csv'), index=False, encoding='utf-8-sig')
         return this
 
 
@@ -251,7 +298,7 @@ class UserDf:
         user['age_group'] = user['age_group'].map(age_mapping)
         this.user = this.user # overriding
         print(this.user)
-        # this.user.to_csv(os.path.join('com_cheese_api/resources/data', 'user_check.csv'), index=False, encoding='utf-8-sig')
+        # this.user.to_csv(os.path.join('data', 'user_check.csv'), index=False, encoding='utf-8-sig')
         return this
 
     @staticmethod
@@ -265,6 +312,13 @@ class UserDf:
     #     test = this.test
 
     #     train[]
+
+    @staticmethod
+    def brand_merge_code(this) -> object:
+        brand_code = pd.read_csv("com_cheese_api/resources/data/cheese_brand_code.csv")
+        this.user = pd.merge(this.user, brand_code, left_on = 'cheese_brand', right_on = 'brand', how = 'left')
+        return this
+
 
     @staticmethod
     def buy_count_numeric(this) -> object:
@@ -311,8 +365,8 @@ class UserDf:
     @staticmethod
     def user_data_split (data):
         user_train, user_test = train_test_split(data, test_size=0.3, random_state = 32)
-        user_train.to_csv(os.path.join('com_cheese_api/resources/data', 'user_train.csv'), index=False)
-        user_test.to_csv(os.path.join('com_cheese_api/resources/data', 'user_test.csv'), index=False)
+        user_train.to_csv(os.path.join('com_cheese_api/study/data', 'user_train.csv'), index=False)
+        user_test.to_csv(os.path.join('com_cheese_api/study/data', 'user_test.csv'), index=False)
         return user_train, user_test
 
 
@@ -336,7 +390,7 @@ class UserDf:
         user_df = data.loc[:,['cheese_name']]
         user_lists = np.array(user_df['cheese_name'].tolist())
                 
-        with open('com_cheese_api/resources/data/stopword.txt', 'r') as file:
+        with open('/data/stopword.txt', 'r') as file:
             lines = file.readlines()
             stop_str = ''.join(lines)
             stopword = stop_str.replace('\n', ' ')
@@ -393,26 +447,26 @@ class UserDf:
         plt.show()
 
 '''
-       user_id password  gender  age_group  cheese_texture  buy_count
-0      1751881        1       1          2               1          2
-1      1835210        1       1          2               1          2
-2      5824726        1       1          4               1          1
-3      1752218        1       0          3               1          3
-4      2034072        1       1          3               1          1
-...        ...      ...     ...        ...             ...        ...
-25806  1718175        1       1          1               1          1
-25807  2155344        1       1          3               4          1
-25808  5939075        1       1          2               2          3
-25809  4959284        1       1          2               1          1
-25810  1747758        1       1          4               2          1
+        user_no  user_id password  gender  age_group  cheese_texture  buy_count
+0         3312  1751881        1       1          2               1          2
+1        21971  1835210        1       1          2               1          2
+2         2347  5824726        1       1          4               1          1
+3        18459  1752218        1       0          3               1          3
+4         8768  2034072        1       1          3               1          1
+...        ...      ...      ...     ...        ...             ...        ...
+25806    19527  1718175        1       1          1               1          1
+25807    24828  2155344        1       1          3               4          1
+25808    20414  5939075        1       1          2               2          3
+25809     9526  4959284        1       1          2               1          1
+25810    10967  1747758        1       1          4               2          1
 
-[25811 rows x 6 columns]
+[25811 rows x 7 columns]
 '''
 
 
-if __name__ == '__main__':
-    userDf = UserDf()
-    userDf.new()
+# if __name__ == '__main__':
+#     userDf = UserDf()
+#     userDf.new()
 
 
 
@@ -427,11 +481,12 @@ class UserDto(db.Model):
     __tablename__ = 'users'
     __table_args__ = {'mysql_collate':'utf8_general_ci'}
 
-    user_index: int = db.Column(db.Integer, primary_key= True, index = True)
+    user_no: int = db.Column(db.Integer, primary_key= True, index = True)
     user_id: str = db.Column(db.String(20))
     password: str = db.Column(db.String(1))
     gender: int = db.Column(db.Integer)
     age_group: int = db.Column(db.Integer)
+    cheese_brand: int = db.Column(db.Integer)
     cheese_texture: int = db.Column(db.Integer)
     buy_count: int = db.Column(db.Integer)
 
@@ -439,43 +494,46 @@ class UserDto(db.Model):
     # prices = db.relationship('PriceDto', back_populates='user', lazy='dynamic')
     # articles = db.relationship('ArticleDto', back_populates='user', lazy='dynamic')
 
-    def __init__(self, user_index, user_id, password, gender, age_group, cheese_texture, buy_count):
-        self.user_index = user_index
+    def __init__(self, user_no, user_id, password, gender, age_group, cheese_brand, cheese_texture, buy_count):
+        self.user_no = user_no
         self.user_id = user_id
         self.password = password
         self.gender = gender
         self.age_group = age_group
+        self.cheese_brand = cheese_brand
         self.cheese_texture = cheese_texture
         self.buy_count = buy_count
 
     def __repr__(self):
-        return f'User(user_index={self.user_index}, user_id={self.user_id}, password={self.password}, \
-                    gender = {self.gender}, age_group={self.age_group}, \
+        return f'User(user_no={self.user_no}, user_id={self.user_id}, password={self.password}, \
+                    gender = {self.gender}, age_group={self.age_group}, cheese_brand={self.cheese_brand},\
                     cheese_texture={self.cheese_texture}, buy_count={self.buy_count})'
 
     def __str__(self):
-        return f'User(user_index={self.user_index}, user_id={self.user_id}, password={self.password}, \
-                    gender = {self.gender}, age_group={self.age_group}, \
+        return f'User(user_no={self.user_no}, user_id={self.user_id}, password={self.password}, \
+                    gender = {self.gender}, age_group={self.age_group}, cheese_brand={self.cheese_brand},\
                     cheese_texture={self.cheese_texture}, buy_count={self.buy_count})'
 
     def json(self):
         return {
-            'user_index' : self.user_index,
+            'user_no' : self.user_no,
             'userId' : self.user_id,
             'password': self.password,
             'gender': self.gender,
             'age_group': self.age_group,
+            'cheese_brand': self.cheese_brand,
             'cheese_texture': self.cheese_texture,
             'buy_count': self.buy_count
         }
 
 # Json 형태로 쓰기 위해 씀!
 class UserVo():
-    user_index: int = 0
+    user_no: int = 0
     user_id: str = ''
     password: str = ''
     gender: int = 0
     age_group: int = 0
+    cheese_brand: int = 0
     cheese_texture: int = 0
     buy_count: int = 0
 
@@ -488,19 +546,95 @@ class UserVo():
 #     ...
 
 
+db.init_app(app)
+with app.app_context():
+    db.create_all()
+
+
+
 Session = openSession()
 session = Session()
     
 
-# class UserDao(UserDto):
-#     @classmethod
-#     def bulk(cls, UserDf):
-#         userDf = UserDf()
-#         df = UserDf.new()
-#         print(df.head())
-#         session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
-#         session.commit()
-#         session.close()
+class UserDao(UserDto):
+    # @classmethod
+    # def bulk(cls, UserDf):
+    #     userDf = UserDf()
+    #     df = UserDf.new()
+    #     print(df.head())
+    #     session.bulk_insert_mappings(cls, df.to_dict(orient="records"))
+    #     session.commit()
+    #     session.close()
+    @staticmethod
+    def bulk():
+        userDf = UserDf()
+        df = userDf.new()
+        print(df.head())
+        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+        session.commit()
+        session.close()
 
-# if __name__ == '__main__':
-#     UserDao.bulk()
+    @staticmethod
+    def save(user):
+        session.add(user)
+        session.commit()
+
+    @classmethod
+    def update(cls, user):
+        session.query(cls).filter(cls.user_no == user['user_no'])\
+            .update({cls.password: user['password']})
+        session.commit()
+
+    @classmethod
+    def delete(cls, user_no):
+        data = cls.query.get(user_no)
+        db.session.delete(data)
+        db.session.commit()
+
+    @classmethod
+    def count(cls):
+        return session.query(func.count(cls.user_no)).one()
+
+    @classmethod
+    def find_all(cls):
+        # sql = cls.query
+        # df = pd.read_sql(sql.statement, sql.session.bind)
+        # return json.loads(df.to_json(orient='records'))
+        return session.query(cls).all()
+
+    '''
+    SELECT * FROM users
+    WHERE user_name LIKE a
+    '''
+
+    @classmethod
+    def find_one(cls, user_id):
+        return session.query(cls) \
+            .filter(cls.user_id == user_id).one()
+
+    # @classmethod
+    # def find_by_name(cls, name):
+    #     return session.query(cls).filter(cls.user_no.like(f'%{name}%')).all()
+
+    @classmethod
+    def find_users_in_category(cls, start, end):
+        return session.query(cls) \
+            .filter(cls.user_id.in_([start, end])).all()
+
+    @classmethod
+    def find_users_by_gender_and_age(cls, gender, age_group):
+        return session.query(cls) \
+            .filter(and_(cls.gender.like(gender),
+            cls.age_group.like(f'{age_group}%'))).all()
+
+
+    @classmethod
+    def login(cls, user):
+        return session.query(cls)\
+            .filter(cls.user_id == user.user_id,
+                cls.password == user.password).one()
+
+
+
+if __name__ == '__main__':
+    UserDao.bulk()
