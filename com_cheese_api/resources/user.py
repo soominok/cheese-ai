@@ -254,7 +254,7 @@ class UserDf:
                                                         'category_y': 'cheese_category', 'texture': 'cheese_texture', 'types': 'cheese_types'})
         # print(list(users_cheese_merge))
         # print(user_data_fin)
-        user_data_fin.to_csv(os.path.join('com_cheese_api/study/data', 'user_df.csv'), index=False, encoding='utf-8-sig')
+        user_data_fin.to_csv(os.path.join('com_cheese_api/resources/data', 'user_df.csv'), index=False, encoding='utf-8-sig')
 
         return user_data_fin
     # item_Change()
@@ -356,9 +356,9 @@ class UserDf:
 
         return this
 
-    @staticmethod
-    def random_food(this) -> object:
-        this.user[]
+    # @staticmethod
+    # def random_food(this) -> object:
+    #     this.user[]
 
     # @staticmethod
     # def cheese_one_price_numeric(this) -> object:
@@ -369,8 +369,8 @@ class UserDf:
     @staticmethod
     def user_data_split (data):
         user_train, user_test = train_test_split(data, test_size=0.3, random_state = 32)
-        user_train.to_csv(os.path.join('com_cheese_api/study/data', 'user_train.csv'), index=False)
-        user_test.to_csv(os.path.join('com_cheese_api/study/data', 'user_test.csv'), index=False)
+        user_train.to_csv(os.path.join('com_cheese_api/resources/data', 'user_train.csv'), index=False)
+        user_test.to_csv(os.path.join('com_cheese_api/resources/data', 'user_test.csv'), index=False)
         return user_train, user_test
 
 
