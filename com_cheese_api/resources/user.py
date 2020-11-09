@@ -356,6 +356,9 @@ class UserDf:
 
         return this
 
+    @staticmethod
+    def random_food(this) -> object:
+        this.user[]
 
     # @staticmethod
     # def cheese_one_price_numeric(this) -> object:
@@ -465,9 +468,9 @@ class UserDf:
 '''
 
 
-# if __name__ == '__main__':
-#     userDf = UserDf()
-#     userDf.new()
+if __name__ == '__main__':
+    userDf = UserDf()
+    userDf.new()
 
 
 
@@ -478,164 +481,164 @@ class UserDf:
 # =======================                =======================
 # ==============================================================
 
-class UserDto(db.Model):
-    __tablename__ = 'users'
-    __table_args__ = {'mysql_collate':'utf8_general_ci'}
+# class UserDto(db.Model):
+#     __tablename__ = 'users'
+#     __table_args__ = {'mysql_collate':'utf8_general_ci'}
 
-    user_no: int = db.Column(db.Integer, primary_key= True, index = True)
-    user_id: str = db.Column(db.String(20))
-    password: str = db.Column(db.String(1))
-    gender: int = db.Column(db.Integer)
-    age_group: int = db.Column(db.Integer)
-    cheese_brand: int = db.Column(db.Integer)
-    cheese_texture: int = db.Column(db.Integer)
-    buy_count: int = db.Column(db.Integer)
+#     user_no: int = db.Column(db.Integer, primary_key= True, index = True)
+#     user_id: str = db.Column(db.String(20))
+#     password: str = db.Column(db.String(1))
+#     gender: int = db.Column(db.Integer)
+#     age_group: int = db.Column(db.Integer)
+#     cheese_brand: int = db.Column(db.Integer)
+#     cheese_texture: int = db.Column(db.Integer)
+#     buy_count: int = db.Column(db.Integer)
 
-    # orders = db.relationship('OrderDto', back_populates='user', lazy='dynamic')
-    # prices = db.relationship('PriceDto', back_populates='user', lazy='dynamic')
-    # articles = db.relationship('ArticleDto', back_populates='user', lazy='dynamic')
+#     # orders = db.relationship('OrderDto', back_populates='user', lazy='dynamic')
+#     # prices = db.relationship('PriceDto', back_populates='user', lazy='dynamic')
+#     # articles = db.relationship('ArticleDto', back_populates='user', lazy='dynamic')
 
-    def __init__(self, user_no, user_id, password, gender, age_group, cheese_brand, cheese_texture, buy_count):
-        self.user_no = user_no
-        self.user_id = user_id
-        self.password = password
-        self.gender = gender
-        self.age_group = age_group
-        self.cheese_brand = cheese_brand
-        self.cheese_texture = cheese_texture
-        self.buy_count = buy_count
+#     def __init__(self, user_no, user_id, password, gender, age_group, cheese_brand, cheese_texture, buy_count):
+#         self.user_no = user_no
+#         self.user_id = user_id
+#         self.password = password
+#         self.gender = gender
+#         self.age_group = age_group
+#         self.cheese_brand = cheese_brand
+#         self.cheese_texture = cheese_texture
+#         self.buy_count = buy_count
 
-    def __repr__(self):
-        return f'User(user_no={self.user_no}, user_id={self.user_id}, password={self.password}, \
-                    gender = {self.gender}, age_group={self.age_group}, cheese_brand={self.cheese_brand},\
-                    cheese_texture={self.cheese_texture}, buy_count={self.buy_count})'
+#     def __repr__(self):
+#         return f'User(user_no={self.user_no}, user_id={self.user_id}, password={self.password}, \
+#                     gender = {self.gender}, age_group={self.age_group}, cheese_brand={self.cheese_brand},\
+#                     cheese_texture={self.cheese_texture}, buy_count={self.buy_count})'
 
-    def __str__(self):
-        return f'User(user_no={self.user_no}, user_id={self.user_id}, password={self.password}, \
-                    gender = {self.gender}, age_group={self.age_group}, cheese_brand={self.cheese_brand},\
-                    cheese_texture={self.cheese_texture}, buy_count={self.buy_count})'
+#     def __str__(self):
+#         return f'User(user_no={self.user_no}, user_id={self.user_id}, password={self.password}, \
+#                     gender = {self.gender}, age_group={self.age_group}, cheese_brand={self.cheese_brand},\
+#                     cheese_texture={self.cheese_texture}, buy_count={self.buy_count})'
 
-    def json(self):
-        return {
-            'user_no' : self.user_no,
-            'userId' : self.user_id,
-            'password': self.password,
-            'gender': self.gender,
-            'age_group': self.age_group,
-            'cheese_brand': self.cheese_brand,
-            'cheese_texture': self.cheese_texture,
-            'buy_count': self.buy_count
-        }
+#     def json(self):
+#         return {
+#             'user_no' : self.user_no,
+#             'userId' : self.user_id,
+#             'password': self.password,
+#             'gender': self.gender,
+#             'age_group': self.age_group,
+#             'cheese_brand': self.cheese_brand,
+#             'cheese_texture': self.cheese_texture,
+#             'buy_count': self.buy_count
+#         }
 
-# Json 형태로 쓰기 위해 씀!
-class UserVo():
-    user_no: int = 0
-    user_id: str = ''
-    password: str = ''
-    gender: int = 0
-    age_group: int = 0
-    cheese_brand: int = 0
-    cheese_texture: int = 0
-    buy_count: int = 0
+# # Json 형태로 쓰기 위해 씀!
+# class UserVo():
+#     user_no: int = 0
+#     user_id: str = ''
+#     password: str = ''
+#     gender: int = 0
+#     age_group: int = 0
+#     cheese_brand: int = 0
+#     cheese_texture: int = 0
+#     buy_count: int = 0
 
-# 텐서플로우가 걸리는 곳
-# class UserTf():
-#     ...
+# # 텐서플로우가 걸리는 곳
+# # class UserTf():
+# #     ...
 
-# 인공지능 판단해주는 곳
-# class UserAi():
-#     ...
-
-
-db.init_app(app)
-with app.app_context():
-    db.create_all()
+# # 인공지능 판단해주는 곳
+# # class UserAi():
+# #     ...
 
 
+# db.init_app(app)
+# with app.app_context():
+#     db.create_all()
 
-Session = openSession()
-session = Session()
+
+
+# Session = openSession()
+# session = Session()
     
 
-class UserDao(UserDto):
-    # @classmethod
-    # def bulk(cls, UserDf):
-    #     userDf = UserDf()
-    #     df = UserDf.new()
-    #     print(df.head())
-    #     session.bulk_insert_mappings(cls, df.to_dict(orient="records"))
-    #     session.commit()
-    #     session.close()
-    @staticmethod
-    def bulk():
-        userDf = UserDf()
-        df = userDf.new()
-        print(df.head())
-        session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
-        session.commit()
-        session.close()
+# class UserDao(UserDto):
+#     # @classmethod
+#     # def bulk(cls, UserDf):
+#     #     userDf = UserDf()
+#     #     df = UserDf.new()
+#     #     print(df.head())
+#     #     session.bulk_insert_mappings(cls, df.to_dict(orient="records"))
+#     #     session.commit()
+#     #     session.close()
+#     @staticmethod
+#     def bulk():
+#         userDf = UserDf()
+#         df = userDf.new()
+#         print(df.head())
+#         session.bulk_insert_mappings(UserDto, df.to_dict(orient="records"))
+#         session.commit()
+#         session.close()
 
-    @staticmethod
-    def save(user):
-        session.add(user)
-        session.commit()
+#     @staticmethod
+#     def save(user):
+#         session.add(user)
+#         session.commit()
 
-    @classmethod
-    def update(cls, user):
-        session.query(cls).filter(cls.user_no == user['user_no'])\
-            .update({cls.password: user['password']})
-        session.commit()
+#     @classmethod
+#     def update(cls, user):
+#         session.query(cls).filter(cls.user_no == user['user_no'])\
+#             .update({cls.password: user['password']})
+#         session.commit()
 
-    @classmethod
-    def delete(cls, user_no):
-        data = cls.query.get(user_no)
-        db.session.delete(data)
-        db.session.commit()
+#     @classmethod
+#     def delete(cls, user_no):
+#         data = cls.query.get(user_no)
+#         db.session.delete(data)
+#         db.session.commit()
 
-    @classmethod
-    def count(cls):
-        return session.query(func.count(cls.user_no)).one()
+#     @classmethod
+#     def count(cls):
+#         return session.query(func.count(cls.user_no)).one()
 
-    @classmethod
-    def find_all(cls):
-        # sql = cls.query
-        # df = pd.read_sql(sql.statement, sql.session.bind)
-        # return json.loads(df.to_json(orient='records'))
-        return session.query(cls).all()
+#     @classmethod
+#     def find_all(cls):
+#         # sql = cls.query
+#         # df = pd.read_sql(sql.statement, sql.session.bind)
+#         # return json.loads(df.to_json(orient='records'))
+#         return session.query(cls).all()
 
-    '''
-    SELECT * FROM users
-    WHERE user_name LIKE a
-    '''
+#     '''
+#     SELECT * FROM users
+#     WHERE user_name LIKE a
+#     '''
 
-    @classmethod
-    def find_one(cls, user_id):
-        return session.query(cls) \
-            .filter(cls.user_id == user_id).one()
+#     @classmethod
+#     def find_one(cls, user_id):
+#         return session.query(cls) \
+#             .filter(cls.user_id == user_id).one()
 
-    # @classmethod
-    # def find_by_name(cls, name):
-    #     return session.query(cls).filter(cls.user_no.like(f'%{name}%')).all()
+#     # @classmethod
+#     # def find_by_name(cls, name):
+#     #     return session.query(cls).filter(cls.user_no.like(f'%{name}%')).all()
 
-    @classmethod
-    def find_users_in_category(cls, start, end):
-        return session.query(cls) \
-            .filter(cls.user_id.in_([start, end])).all()
+#     @classmethod
+#     def find_users_in_category(cls, start, end):
+#         return session.query(cls) \
+#             .filter(cls.user_id.in_([start, end])).all()
 
-    @classmethod
-    def find_users_by_gender_and_age(cls, gender, age_group):
-        return session.query(cls) \
-            .filter(and_(cls.gender.like(gender),
-            cls.age_group.like(f'{age_group}%'))).all()
-
-
-    @classmethod
-    def login(cls, user):
-        return session.query(cls)\
-            .filter(cls.user_id == user.user_id,
-                cls.password == user.password).one()
+#     @classmethod
+#     def find_users_by_gender_and_age(cls, gender, age_group):
+#         return session.query(cls) \
+#             .filter(and_(cls.gender.like(gender),
+#             cls.age_group.like(f'{age_group}%'))).all()
 
 
+#     @classmethod
+#     def login(cls, user):
+#         return session.query(cls)\
+#             .filter(cls.user_id == user.user_id,
+#                 cls.password == user.password).one()
 
-if __name__ == '__main__':
-    UserDao.bulk()
+
+
+# if __name__ == '__main__':
+#     UserDao.bulk()

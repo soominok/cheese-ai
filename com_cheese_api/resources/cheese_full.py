@@ -16,7 +16,7 @@ import numpy as np
 import json
 import os
 import sys
-
+sys.path
 
 # from selenium import webdriver
 import csv, time
@@ -40,32 +40,6 @@ from sklearn.model_selection import train_test_split
  *  -------    --------    ---------------------------
  *  2020.10.20    김유정          최초 생성
 ''' 
-
-from datetime import datetime
-from flask import Flask, render_template, url_for, flash, redirect
-from flask_sqlalchemy import SQLAlchemy
-
-
-app = Flask(__name__)
-
-config = {
-    'user': 'bitai',
-    'password': '456123',
-    'host': '127.0.0.1',
-    'port': '3306',
-    'database': 'com_cheese_api'
-}
-
-charset = {'utf8':'utf8'}
-
-url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
-
-
-
-app.config['SQLALCHEMY_DATABASE_URI'] = url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-
 
 
 # 1. 데이터 추출 KDD의 목표는 csv로 만드는 것
@@ -174,17 +148,93 @@ class CheeseDf:
         this = self.fileReader
         cheese = 'cheese_data.csv'    
         this.cheese = self.new_model(cheese)
-        
+        print(this.cheese)
         # print(this)
 
+        print(this.cheese.isnull().sum())
+
+        this = CheeseDf.brand_merge_code(this)
+        this = CheeseDf.ranking_ordinal(this)
+        this = CheeseDf.cheese_texture_norminal(this)
+        this = CheeseDf.types_norminal(this)
+        this = CheeseDf.cheese_category_norminal(this)
+        this = CheeseDf.country_norminal(this)
+        this.cheese['cheese_id'] = this.cheese['cheese_id'].str.replace('p','')
         this = CheeseDf.change_type_price(this)
 
-        print(this.cheese)
-        print(this.cheese.isnull().sum())
-        print(this.cheese.dtypes)
 
-        this.cheese.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_dataset.csv'), index=True, encoding='utf-8-sig')
-        return this.cheese
+        # this.cheese.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_dataset.csv'), index=True, encoding='utf-8-sig')
+
+
+        cheese_split = CheeseDf.df_split(this.cheese)
+
+        # train, test 데이터 #
+        train = 'cheese_train.csv'
+        test = 'cheese_test.csv'
+        this = self.fileReader
+        this.train = self.new_model(train) # payload
+        this.test = self.new_model(test) # payload
+
+        print(this)
+
+        self.odf = pd.DataFrame(
+            {
+                'ranking' : this.train.ranking,
+                'brand' : this.train.brand_code,
+                'category' : this.train.category,
+                'types': this.train.types,
+                'matching': this.train.matching
+            }
+        )
+
+        this.id = this.test['name']
+        this = CheeseDf.drop_feature(this, 'Unnamed: 0')
+        # print(f'Preprocessing Train Variable : {this.train.columns}')
+        # print(f'Preprocessing Test Variable : {this.test.columns}')    
+        this = CheeseDf.drop_feature(this, 'country')
+        this = CheeseDf.drop_feature(this, 'price')
+        this = CheeseDf.drop_feature(this, 'content')
+        # print(f'Post-Drop Variable : {this.train.columns}')   
+
+
+
+        # # print(f'Preprocessing Train Result: {this.train.head()}')
+        # # print(f'Preprocessing Test Result: {this.test.head()}')
+        # # print(f'Train NA Check: {this.train.isnull().sum()}')
+        # # print(f'Test NA Check: {this.test.isnull().sum()}')    
+
+        this.label = CheeseDf.create_label(this) # payload
+        this.train = CheeseDf.create_train(this) # payload
+
+        # # print(f'Train Variable: {this.train.columns}')
+        # # print(f'Test Varibale: {this.test.columns}')
+        # clf = RandomForestClassifier()
+        # clf.fit(this.train, this.label)
+        # prediction = clf.predict(this.test)
+
+        # print(this)
+
+
+        df = pd.DataFrame(
+
+            {
+                'texture': this.train.texture,
+                'img' : this.train.img
+                
+            }
+
+        )
+
+        # print(self.odf)
+        # print(df)
+        sumdf = pd.concat([self.odf, df], axis=1)
+        print(sumdf)
+        print(sumdf.isnull().sum())
+        print(list(sumdf))
+        # sumdf.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_fin.csv'), index=False, encoding='utf-8-sig')
+        return sumdf
+
+
 
     def new_model(self, payload) -> object:
         this = self.fileReader
@@ -195,19 +245,97 @@ class CheeseDf:
         return pd.read_csv(Path(self.data, this.fname)) 
 
     @staticmethod
+    def create_train(this) -> object:
+        return this.train.drop('name', axis = 1)
+        
+
+    @staticmethod
+    def create_label(this) -> object:
+        return this.train['name'] # Label is the answer.
+
+    @staticmethod
+    def drop_feature(this, feature) -> object:
+        this.train = this.train.drop([feature], axis = 1)
+        this.test = this.test.drop([feature], axis = 1)
+        return this
+
+    @staticmethod
     def change_type_price(this):
         this.cheese['price'] = this.cheese['price'].str.replace(',', '')
         this.cheese['price'] = this.cheese['price'].str.replace('원', '')
         this.cheese = this.cheese.astype({'price': int})
         return this
 
+    @staticmethod
+    def brand_merge_code(this) -> object:
+        brand_code = pd.read_csv("com_cheese_api/resources/data/cheese_brand_code.csv")
+        this.cheese = pd.merge(this.cheese, brand_code, left_on = 'brand', right_on='brand', how = 'left')
+        return this
 
-    # @staticmethod
-    # def df_split(data):
-    #     cheese_train, cheese_test = train_test_split(data, test_size = 0.3, random_state = 32)
-    #     cheese_train.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_train.csv'), index=False)
-    #     cheese_test.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_test.csv'), index=False)       
-    #     return cheese_train, cheese_test
+    @staticmethod
+    def ranking_ordinal(this) -> object:
+        return this
+
+    @staticmethod
+    def country_norminal(this) -> object:
+        this.cheese['country_code'] = this.cheese['country'].map({
+            '이탈리아': 1,
+            '이탈리안': 1,
+            '프랑스': 2,
+            '미국': 2,
+            '네덜란드': 3,
+            '스페인': 4,
+            '독일': 5,
+            '영국': 6,
+            '덴마크': 7,
+            '뉴질랜드': 8,
+        })
+        return this
+
+    @staticmethod
+    def cheese_texture_norminal(this) -> object:
+        this.cheese['texture'] = this.cheese['texture'].map({
+            '후레쉬치즈': 1,
+            '세미하드치즈': 2,
+            '세미하드': 2,
+            '하드치즈': 3,
+            '소프트치즈': 4,
+            '연성치즈': 5,
+            '경성치즈': 6
+        })
+        return this
+
+    @staticmethod
+    def types_norminal(this) -> object:
+        types_mapping = {'가공치즈':0, '자연치즈':1}
+        this.cheese ['types'] = this.cheese['types'].map(types_mapping)
+        this.cheese = this.cheese
+        return this
+
+    @staticmethod
+    def cheese_category_norminal(this) -> object:
+        category_map = {
+            '모짜렐라': 1,
+            '블루치즈': 2,
+            '리코타': 3,
+            '체다': 4,
+            '파르미지아노 레지아노': 5,
+            '고다': 6,
+            '까망베르': 7,
+            '브리': 8,
+            '만체고': 9,
+            '에멘탈': 10,
+            '부라타': 11
+        }
+        this.cheese['category'] = this.cheese['category'].map(category_map)
+        return this
+
+    @staticmethod
+    def df_split(data):
+        cheese_train, cheese_test = train_test_split(data, test_size = 0.3, random_state = 32)
+        cheese_train.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_train.csv'), index=False)
+        cheese_test.to_csv(os.path.join('com_cheese_api/study/data', 'cheese_test.csv'), index=False)       
+        return cheese_train, cheese_test
 
 if __name__ == '__main__' :
     df = CheeseDf()
@@ -288,14 +416,14 @@ if __name__ == '__main__' :
 #     img : ''
 
 
-# # db.init_app(app)
-# # with app.app_context():
-# #     db.create_all()
+# db.init_app(app)
+# with app.app_context():
+#     db.create_all()
 
 
 
-# # Session = openSession()
-# # session = Session()
+# Session = openSession()
+# session = Session()
     
 
 # class CheeseDao(CheeseDto):
