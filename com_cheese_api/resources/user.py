@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from com_cheese_api.util.file import FileReader
 from pathlib import Path
-from com_cheese_api.ext.db import url, db, openSession, engine
-from konlpy.tag import Okt
-from collections import Counter
-from wordcloud import WordCloud
+# from com_cheese_api.ext.db import url, db, openSession, engine
+# from konlpy.tag import Okt
+# from collections import Counter
+# from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import seaborn as sns
@@ -25,32 +25,32 @@ from sklearn.svm import SVC # svm
 import os
 import json
 
-from datetime import datetime
-from flask import Flask, render_template, url_for, flash, redirect
-from flask_sqlalchemy import SQLAlchemy
+# from datetime import datetime
+# from flask import Flask, render_template, url_for, flash, redirect
+# from flask_sqlalchemy import SQLAlchemy
 
-Session = openSession()
-session = Session()
+# Session = openSession()
+# session = Session()
 
-app = Flask(__name__)
+# app = Flask(__name__)
 
-config = {
-    'user': 'bitai',
-    'password': '456123',
-    'host': '127.0.0.1',
-    'port': '3306',
-    'database': 'com_cheese_api'
-}
+# config = {
+#     'user': 'bitai',
+#     'password': '456123',
+#     'host': '127.0.0.1',
+#     'port': '3306',
+#     'database': 'com_cheese_api'
+# }
 
-charset = {'utf8':'utf8'}
+# charset = {'utf8':'utf8'}
 
-url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
+# url = f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}?charset=utf8"
 
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = url
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# app.config['SQLALCHEMY_DATABASE_URI'] = url
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# db = SQLAlchemy(app)
 
 
 
@@ -449,27 +449,121 @@ class UserDf:
         sns.clustermap(make_corr, annot = True, cmap = 'RdYlBu_r', linewidths=.5, cbar_kws={"shrink": .5}, vmin = -1, vmax = 1)
         plt.show()
 
-'''
-        user_no  user_id password  gender  age_group  cheese_texture  buy_count
-0         3312  1751881        1       1          2               1          2
-1        21971  1835210        1       1          2               1          2
-2         2347  5824726        1       1          4               1          1
-3        18459  1752218        1       0          3               1          3
-4         8768  2034072        1       1          3               1          1
-...        ...      ...      ...     ...        ...             ...        ...
-25806    19527  1718175        1       1          1               1          1
-25807    24828  2155344        1       1          3               4          1
-25808    20414  5939075        1       1          2               2          3
-25809     9526  4959284        1       1          2               1          1
-25810    10967  1747758        1       1          4               2          1
+    '''
+            user_no  user_id password  gender  age_group  cheese_texture  buy_count
+    0         3312  1751881        1       1          2               1          2
+    1        21971  1835210        1       1          2               1          2
+    2         2347  5824726        1       1          4               1          1
+    3        18459  1752218        1       0          3               1          3
+    4         8768  2034072        1       1          3               1          1
+    ...        ...      ...      ...     ...        ...             ...        ...
+    25806    19527  1718175        1       1          1               1          1
+    25807    24828  2155344        1       1          3               4          1
+    25808    20414  5939075        1       1          2               2          3
+    25809     9526  4959284        1       1          2               1          1
+    25810    10967  1747758        1       1          4               2          1
 
-[25811 rows x 7 columns]
-'''
+    [25811 rows x 7 columns]
+    '''
+
+
+    @staticmethod
+    def create_k_fold():
+        return KFold(n_splits = 10, shuffle = True, random_state = 0)
+
+    def accuracy_by_dtree(self, this):
+        dtree = DecisionTreeClassifier()
+        score = cross_val_score(dtree, this.train, this.label, cv = UserDf.create_k_fold(), \
+                n_jobs = 1, scoring = 'accuracy')
+        return round(np.mean(score) * 100, 2)
+
+    def accuracy_by_rforest(self, this):
+        rforest = RandomForestClassifier()
+        score = cross_val_score(rforest, this.train, this.label, cv=UserDf.create_k_fold(), \
+                n_jobs = 1, scoring = 'accuracy')
+        return round(np.mean(score) * 100, 2)
+
+    def accuracy_by_knn(self, this):
+        knn = KNeighborsClassifier()
+        score = cross_val_score(knn, this.train , this.label, cv = UserDf.create_k_fold(), \
+                n_jobs = 1, scoring = 'accuracy')
+        return round(np.mean(score) * 100, 2)
+
+    def accuracy_by_svm(self, this):
+        svm = SVC()
+        score = cross_val_score(svm, this.train, this.label, cv = UserDf.create_k_fold(), \
+                n_jobs = 1, scoring = 'accuracy')
+        return round(np.mean(score) * 100, 2)
+
+class UserService:
+    def __init__(self):
+        self.fileReader = FileReader()  
+        self.data = '.com/data'
+        self.model = UserDf()
+
+    def modeling(self, train, test):
+        model = self.model
+        this = UserDf.new(self)
+        this.label = model.create_label(this)
+        this.train = model.create_train(this)
+        print(f'>> Train 변수 : {this.train.columns}')
+        print(f'>> Test 변수 : {this.train.columns}')
+        return this
+
+    # def preprocessing(self, train, test):
+    #     model = self.model
+    #     this = self.fileReader
+    #     this.train = model.new_model(train) # payload
+    #     this.test = model.new_model(test) # payload
+    #     this.id = this.test['PassengerId'] # machine 이에게는 이것이 question 이 됩니다. 
+    #     print(f'정제 전 Train 변수 : {this.train.columns}')
+    #     print(f'정제 전 Test 변수 : {this.test.columns}')
+    #     this = model.drop_feature(this, 'Cabin')
+    #     this = model.drop_feature(this, 'Ticket')
+    #     print(f'드롭 후 변수 : {this.train.columns}')
+    #     this = model.embarked_norminal(this)
+    #     print(f'승선한 항구 정제결과: {this.train.head()}')
+    #     this = model.title_norminal(this)
+    #     print(f'타이틀 정제결과: {this.train.head()}')
+    #     # name 변수에서 title 을 추출했으니 name 은 필요가 없어졌고, str 이니 
+    #     # 후에 ML-lib 가 이를 인식하는 과정에서 에러를 발생시킬것이다.
+    #     this = model.drop_feature(this, 'Name')
+    #     this = model.drop_feature(this, 'PassengerId')
+    #     this = model.age_ordinal(this)
+    #     print(f'나이 정제결과: {this.train.head()}')
+    #     this = model.drop_feature(this, 'SibSp')
+    #     this = model.sex_norminal(this)
+    #     print(f'성별 정제결과: {this.train.head()}')
+    #     this = model.fareBand_nominal(this)
+    #     print(f'요금 정제결과: {this.train.head()}')
+    #     this = model.drop_feature(this, 'Fare')
+    #     print(f'#########  TRAIN 정제결과 ###############')
+    #     print(f'{this.train.head()}')
+    #     print(f'#########  TEST 정제결과 ###############')
+    #     print(f'{this.test.head()}')
+    #     print(f'######## train na 체크 ##########')
+    #     print(f'{this.train.isnull().sum()}')
+    #     print(f'######## test na 체크 ##########')
+    #     print(f'{this.test.isnull().sum()}')
+    #     return this
+        
+
+    def learning(self, train, test):
+        model = self.model
+        this = self.modeling(train, test)
+        print('&&&&&&&&&&&&&&&&& Learning 결과  &&&&&&&&&&&&&&&&')
+        print(f'결정트리 검증결과: {model.accuracy_by_dtree(this)}')
+        print(f'랜덤포리 검증결과: {model.accuracy_by_rforest(this)}')
+        print(f'나이브베이즈 검증결과: {model.accuracy_by_nb(this)}')
+        print(f'KNN 검증결과: {model.accuracy_by_knn(this)}')
+        print(f'SVM 검증결과: {model.accuracy_by_svm(this)}')
 
 
 if __name__ == '__main__':
-    userDf = UserDf()
-    userDf.new()
+    # userDf = UserDf()
+    # userDf.new()
+    service = UserService()
+    service.learning('user_train.csv', 'user_test.csv')
 
 
 
