@@ -70,14 +70,14 @@
 #     userModel.readData()
 
 
-import pandas as pd
+# import pandas as pd
 
-users = pd.read_csv("resources/data/user_dataset.csv")
+# users = pd.read_csv("resources/data/user_dataset.csv")
 
-# user_X_train_set = user_X_train.drop('user_id', axis = 1)
-users['cheese_id'] = users['cheese_id'].str.replace('p','')
-users['cheese_one_price'] = users['cheese_one_price'].str.replace(',', '')
-users['cheese_one_price'] = users['cheese_one_price'].str.replace('원', '')
-users = users.astype({'cheese_one_price': int})
+# # user_X_train_set = user_X_train.drop('user_id', axis = 1)
+# users['cheese_id'] = users['cheese_id'].str.replace('p','')
+# users['cheese_one_price'] = users['cheese_one_price'].str.replace(',', '')
+# users['cheese_one_price'] = users['cheese_one_price'].str.replace('원', '')
+# users = users.astype({'cheese_one_price': int})
 
-# user_X_trian_set = user_X_train_set.astype({'cheese_one_price': int})
+# # user_X_trian_set = user_X_train_set.astype({'cheese_one_price': int})
