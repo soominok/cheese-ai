@@ -163,7 +163,7 @@ class CheeseDf:
         this = CheeseDf.change_type_price(this)
 
 
-        # this.cheese.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_dataset.csv'), index=True, encoding='utf-8-sig')
+        this.cheese.to_csv(os.path.join('com_cheese_api/resources/data', 'cheese_dataset.csv'), index=True, encoding='utf-8-sig')
 
 
         cheese_split = CheeseDf.df_split(this.cheese)
